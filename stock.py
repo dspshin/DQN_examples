@@ -15,7 +15,16 @@ from dqn import dqn
 import gym
 from gym import wrappers
 
-env = gym.make('CartPole-v0')
+from gym.envs.registration import register
+
+# Register CartPole with user-defined max_episode_steps
+register(
+    id='CartPole-v2',
+    entry_point='gym.envs.classic_control:CartPoleEnv',
+    tags={'wrapper_config.TimeLimit.max_episode_steps': 10000},
+    reward_threshold=10000.0
+)
+env = gym.make('CartPole-v2')
 
 # Constants defining our neural network
 input_size = env.observation_space.shape[0]
@@ -67,6 +76,34 @@ def ddqn_replay_train(mainDQN, targetDQN, train_batch):
             # Double DQN: y = r + gamma * targetDQN(s')[a] where
             # a = argmax(mainDQN(s'))
             Q[0, action] = reward + dis * targetDQN.predict(next_state)[0, np.argmax(mainDQN.predict(next_state))]
+
+        y_stack = np.vstack([y_stack, Q])
+        x_stack = np.vstack([x_stack, state])
+
+    # Train our network using target and predicted Q values on each episode
+    return mainDQN.update(x_stack, y_stack)
+
+def simple_replay_train(mainDQN, train_batch):
+    '''
+    Simple DQN implementation
+    :param mainDQN: main DQN
+    :param train_batch: minibatch for train
+    :return: loss
+    '''
+    x_stack = np.empty(0).reshape(0, mainDQN.input_size)
+    y_stack = np.empty(0).reshape(0, mainDQN.output_size)
+
+    # Get stored information from the buffer
+    for state, action, reward, next_state, done in train_batch:
+        Q = mainDQN.predict(state)
+
+        # terminal?
+        if done:
+            Q[0, action] = reward
+        else:
+            # Double DQN: y = r + gamma * targetDQN(s')[a] where
+            # a = argmax(mainDQN(s'))
+            Q[0, action] = reward + dis * np.max(mainDQN.predict(next_state))
 
         y_stack = np.vstack([y_stack, Q])
         x_stack = np.vstack([x_stack, state])
@@ -129,7 +166,7 @@ def main():
 
                 # Get new state and reward from environment
                 next_state, reward, done, _ = env.step(action)
-                if done: # Penalty
+                if done:  # Penalty
                     reward = -100
 
                 # Save the experience to our buffer
@@ -143,15 +180,13 @@ def main():
                     break
 
             print("Episode: {} steps: {}".format(episode, step_count))
-            if step_count > 10000:
-                pass
-                # break
 
             if episode % 10 == 1: # train every 10 episode
                 # Get a random batch of experiences
                 for _ in range(50):
                     minibatch = random.sample(replay_buffer, 10)
                     loss, _ = ddqn_replay_train(mainDQN, targetDQN, minibatch)
+                    #loss, _ = simple_replay_train(mainDQN, minibatch)
 
                 print("Loss: ", loss)
                 # copy q_net -> target_net

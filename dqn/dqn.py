@@ -21,11 +21,16 @@ class DQN:
             layer1 = tf.nn.tanh(tf.matmul(self._X, W1))
 
             # Second layer of Weights
-            W2 = tf.get_variable("W2", shape=[h_size, self.output_size],
+            # W2 = tf.get_variable("W2", shape=[h_size, h_size*2],
+            #                      initializer=tf.contrib.layers.xavier_initializer())
+            # layer2 = tf.nn.tanh(tf.matmul(layer1, W2))
+
+            # 3rd layer of Weights
+            W3 = tf.get_variable("W3", shape=[h_size, self.output_size],
                                  initializer=tf.contrib.layers.xavier_initializer())
 
             # Q prediction
-            self._Qpred = tf.matmul(layer1, W2)
+            self._Qpred = tf.matmul(layer1, W3)
 
         # We need to define the parts of the network needed for learning a policy
         self._Y = tf.placeholder(shape=[None, self.output_size], dtype=tf.float32)
