@@ -10,16 +10,25 @@ import numpy as np
 import tensorflow as tf
 import random
 from collections import deque
-from dqn import dqn
+from dqn import cartpole_dqn
 
-from my_gym import gym
+import gym
+from gym import wrappers
 
-#env = gym.make('CartPole-v2')
-env = gym
+from gym.envs.registration import register
+
+# Register CartPole with user-defined max_episode_steps
+register(
+    id='CartPole-v2',
+    entry_point='gym.envs.classic_control:CartPoleEnv',
+    tags={'wrapper_config.TimeLimit.max_episode_steps': 10000},
+    reward_threshold=10000.0
+)
+env = gym.make('CartPole-v2')
 
 # Constants defining our neural network
-input_size = env.input_size
-output_size = len(env.action_space)
+input_size = env.observation_space.shape[0]
+output_size = env.action_space.n
 
 dis = 0.9
 REPLAY_MEMORY = 50000
@@ -115,12 +124,12 @@ def get_copy_var_ops(*, dest_scope_name="target", src_scope_name="main"):
 
     return op_holder
 
-def bot_play(mainDQN):
-    # See our trained network in action in test env
-    state = env.reset(isTest=True)
+def bot_play(mainDQN, env=env):
+    # See our trained network in action
+    state = env.reset()
     reward_sum = 0
     while True:
-        #env.render()
+        env.render()
         action = np.argmax(mainDQN.predict(state))
         state, reward, done, _ = env.step(action)
         reward_sum += reward
@@ -129,13 +138,13 @@ def bot_play(mainDQN):
             break
 
 def main():
-    max_episodes = 200
+    max_episodes = 5000
     # store the previous observations in replay memory
     replay_buffer = deque()
 
     with tf.Session() as sess:
-        mainDQN = dqn.DQN(sess, input_size, output_size, name="main")
-        targetDQN = dqn.DQN(sess, input_size, output_size, name="target")
+        mainDQN = cartpole_dqn.DQN(sess, input_size, output_size, name="main")
+        targetDQN = cartpole_dqn.DQN(sess, input_size, output_size, name="target")
         tf.global_variables_initializer().run()
 
         #initial copy q_net -> target_net
@@ -150,15 +159,15 @@ def main():
 
             while not done:
                 if np.random.rand(1) < e:
-                    action = random.sample( env.action_space, 1 )[0]
+                    action = env.action_space.sample()
                 else:
                     # Choose an action by greedily from the Q-network
                     action = np.argmax(mainDQN.predict(state))
 
                 # Get new state and reward from environment
                 next_state, reward, done, _ = env.step(action)
-                # if done:  # ends
-                #     reward = -100
+                if done:  # Penalty
+                    reward = -100
 
                 # Save the experience to our buffer
                 replay_buffer.append((state, action, reward, next_state, done))
@@ -167,10 +176,10 @@ def main():
 
                 state = next_state
                 step_count += 1
-                # if step_count > 10000:   # Good enough. Let's move on
-                #     break
+                if step_count > 10000:   # Good enough. Let's move on
+                    break
 
-            #print("Episode: {} steps: {}".format(episode, step_count))
+            print("Episode: {} steps: {}".format(episode, step_count))
 
             if episode % 10 == 1: # train every 10 episode
                 # Get a random batch of experiences
@@ -179,14 +188,18 @@ def main():
                     loss, _ = ddqn_replay_train(mainDQN, targetDQN, minibatch)
                     #loss, _ = simple_replay_train(mainDQN, minibatch)
 
-                #print("Loss: ", loss)
-                print("Episode: {}, Loss: {}".format(episode, loss))
-
+                print("Loss: ", loss)
                 # copy q_net -> target_net
                 sess.run(copy_ops)
 
-        for i in range(10):
-            bot_play(mainDQN)
+        # See our trained bot in action
+        env2 = wrappers.Monitor(env, 'gym-results', force=True)
+
+        for i in range(200):
+            bot_play(mainDQN, env=env2)
+
+        env2.close()
+        # gym.upload("gym-results", api_key="sk_VT2wPcSSOylnlPORltmQ")
 
 if __name__ == "__main__":
     main()

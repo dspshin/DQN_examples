@@ -11,7 +11,7 @@ class DQN:
 
         self._build_network()
 
-    def _build_network(self, h_size=100, l_rate=1e-3):
+    def _build_network(self, h_size=10, l_rate=1e-1):
         with tf.variable_scope(self.net_name):
             self._X = tf.placeholder(tf.float32, [None, self.input_size], name="input_x")
 
@@ -20,17 +20,17 @@ class DQN:
                                  initializer=tf.contrib.layers.xavier_initializer())
             layer1 = tf.nn.tanh(tf.matmul(self._X, W1))
 
-            #Second layer of Weights
-            W2 = tf.get_variable("W2", shape=[h_size, h_size*2],
-                                 initializer=tf.contrib.layers.xavier_initializer())
-            layer2 = tf.nn.tanh(tf.matmul(layer1, W2))
+            # Second layer of Weights
+            # W2 = tf.get_variable("W2", shape=[h_size, h_size*2],
+            #                      initializer=tf.contrib.layers.xavier_initializer())
+            # layer2 = tf.nn.tanh(tf.matmul(layer1, W2))
 
             # 3rd layer of Weights
-            W3 = tf.get_variable("W3", shape=[h_size*2, self.output_size],
+            W3 = tf.get_variable("W3", shape=[h_size, self.output_size],
                                  initializer=tf.contrib.layers.xavier_initializer())
 
             # Q prediction
-            self._Qpred = tf.matmul(layer2, W3)
+            self._Qpred = tf.matmul(layer1, W3)
 
         # We need to define the parts of the network needed for learning a policy
         self._Y = tf.placeholder(shape=[None, self.output_size], dtype=tf.float32)
