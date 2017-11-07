@@ -1,6 +1,7 @@
 import sqlite3
 import numpy as np
 import pandas as pd
+from sklearn import preprocessing
 
 
 # import하면 곧바로 initialize
@@ -23,8 +24,9 @@ df['person'] = df['person'].apply(lambda x:x.replace('++','+').replace('--','-')
 df['program'] = df['program'].apply(lambda x:x.replace('++','+').replace('--','-')).astype(float)
 df['credit'] = df['credit'].astype(float)
 
-# normalize 필요.
-
+# normalize
+min_max_scaler = preprocessing.MinMaxScaler()
+df[['ends', 'amount', 'foreigner', 'insti', 'person', 'program', 'credit']] = min_max_scaler.fit_transform( df[['ends', 'amount', 'foreigner', 'insti', 'person', 'program', 'credit']] )
 
 # training set
 train = df[:1600]

@@ -185,8 +185,8 @@ def main():
                 # copy q_net -> target_net
                 sess.run(copy_ops)
 
-        for i in range(10):
-            bot_play(mainDQN)
+        #for i in range(10):
+        bot_play(mainDQN)
 
 if __name__ == "__main__":
     main()
