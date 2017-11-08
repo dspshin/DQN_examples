@@ -35,7 +35,7 @@ test = df[1601:]
 
 # ratio, amount, ends, foreigner, insti, person, program, credit
 columns = ['ratio', 'amount', 'ends', 'foreigner', 'insti', 'person', 'program', 'credit']
-input_size = len(columns)
+input_size = len(columns) + 1
 
 # 0: buy
 # 1: sell
@@ -66,6 +66,8 @@ def reset(isTest=False):
     state = []
     for col in columns:
         state.append( cur[col] )
+    state.append( deposit )
+
     return state
 
 # state, reward, done, _
@@ -92,19 +94,28 @@ def step(action):
                 deposit -= 1
                 buy += 1
                 buy_cost = cur['ends']
+            else:
+                # 살 수 없는 경우에 대한 penalty
+                #reward = -.1
+                pass
         elif action==1: #sell
             if buy>0:
                 deposit += 1
                 buy -= 1
                 reward = cur['ends'] - buy_cost
+            else:
+                # 팔수 없는 경우에 대한 penalty
+                #reward = -.1
+                pass
 
     # ratio, amount, ends, foreigner, insti, person, program, credit
     state = []
     for col in columns:
         state.append( cur[col] )
+    state.append(deposit)
 
-    if isTestMode:
-        print( index, action, reward )
+    # if isTestMode:
+    #     print( index, action, reward )
 
     return [state, reward, done, None]
 

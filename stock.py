@@ -115,9 +115,10 @@ def get_copy_var_ops(*, dest_scope_name="target", src_scope_name="main"):
 
     return op_holder
 
-def bot_play(mainDQN):
+def bot_play(mainDQN, isTest=False):
     # See our trained network in action in test env
-    state = env.reset(isTest=True)
+    state = env.reset(isTest)
+    start = state[2]
     reward_sum = 0
     while True:
         #env.render()
@@ -125,8 +126,12 @@ def bot_play(mainDQN):
         state, reward, done, _ = env.step(action)
         reward_sum += reward
         if done:
-            print("Total score: {}".format(reward_sum))
+            print("score: {}".format(reward_sum))
             break
+
+    end = state[2]
+    # test 기간 초에 샀다가 마지막에 팔 경우의 점수 (기준점수)...
+    print( 'default score:', end-start )
 
 def main():
     max_episodes = 200
@@ -175,7 +180,7 @@ def main():
             if episode % 10 == 1: # train every 10 episode
                 # Get a random batch of experiences
                 for _ in range(50):
-                    minibatch = random.sample(replay_buffer, 10)
+                    minibatch = random.sample(replay_buffer, 100)
                     loss, _ = ddqn_replay_train(mainDQN, targetDQN, minibatch)
                     #loss, _ = simple_replay_train(mainDQN, minibatch)
 
@@ -186,7 +191,9 @@ def main():
                 sess.run(copy_ops)
 
         #for i in range(10):
-        bot_play(mainDQN)
+        bot_play(mainDQN, False) # training result
+        bot_play(mainDQN, True) # test result
+
 
 if __name__ == "__main__":
     main()
