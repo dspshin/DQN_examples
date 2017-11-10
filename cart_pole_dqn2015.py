@@ -181,6 +181,9 @@ def main():
 
             print("Episode: {} steps: {}".format(episode, step_count))
 
+            if step_count >= 10000:  # 이정도면 충분하다. 훈련 그만.
+                break
+
             if episode % 10 == 1: # train every 10 episode
                 # Get a random batch of experiences
                 for _ in range(50):

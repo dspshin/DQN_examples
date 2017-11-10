@@ -126,17 +126,19 @@ def bot_play(mainDQN, isTest=False):
         state, reward, done, _ = env.step(action)
         reward_sum += reward
         if done:
-            print("score: {}".format(reward_sum))
+            print("{} based profit : {}".format("Test" if isTest else "Train", reward_sum))
             break
 
     end = state[2]
     # test 기간 초에 샀다가 마지막에 팔 경우의 점수 (기준점수)...
-    print( 'default score:', end-start )
+    print('default profit :', end-start)
 
 def main():
     max_episodes = 200
     # store the previous observations in replay memory
     replay_buffer = deque()
+
+    env.load("005930")
 
     with tf.Session() as sess:
         mainDQN = dqn.DQN(sess, input_size, output_size, name="main")
@@ -185,10 +187,12 @@ def main():
                     #loss, _ = simple_replay_train(mainDQN, minibatch)
 
                 #print("Loss: ", loss)
-                print("Episode: {}, Loss: {}".format(episode, loss))
+                #print("Episode: {}, Loss: {}".format(episode, loss))
 
                 # copy q_net -> target_net
                 sess.run(copy_ops)
+
+        print("Loss:", loss)
 
         #for i in range(10):
         bot_play(mainDQN, False) # training result
