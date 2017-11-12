@@ -1,5 +1,5 @@
-# DQN_examples
-RL - Deep Reinforcement Learning Examples
+# DQN examples
+DQN+stock examples
 
-These files are RL example codes for windows.
-http://hunkim.github.io/ml/
+cart-pole example is based on http://hunkim.github.io/ml/
+
