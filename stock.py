@@ -154,6 +154,7 @@ def main():
             done = False
             step_count = 0
             state = env.reset()
+            reward_sum = 0
 
             while not done:
                 if np.random.rand(1) < e:
@@ -164,6 +165,7 @@ def main():
 
                 # Get new state and reward from environment
                 next_state, reward, done, _ = env.step(action)
+                reward_sum += reward
                 # if done:  # ends
                 #     reward = -100
 
@@ -177,7 +179,7 @@ def main():
                 # if step_count > 10000:   # Good enough. Let's move on
                 #     break
 
-            #print("Episode: {} steps: {}".format(episode, step_count))
+            #print("Episode: {} rewards: {}".format(episode, reward_sum))
 
             if episode % 10 == 1: # train every 10 episode
                 # Get a random batch of experiences
@@ -188,6 +190,7 @@ def main():
 
                 #print("Loss: ", loss)
                 #print("Episode: {}, Loss: {}".format(episode, loss))
+                print("Episode:{}, rewards:{}, loss:{}".format(episode, reward_sum, loss))
 
                 # copy q_net -> target_net
                 sess.run(copy_ops)

@@ -126,5 +126,13 @@ def step(action):
     # if isTestMode:
     #     print( index, action, reward )
 
+    # earn : total reward
+    #earn += reward
+
+    # 너무 많이 잃으면 그만 두게 할까?
+    # if earn<-1:
+    #     reward = -100
+    #     done = True
+
     return [state, reward, done, None]
 
