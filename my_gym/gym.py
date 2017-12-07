@@ -5,7 +5,7 @@ from sklearn import preprocessing
 
 
 # import하면 곧바로 initialize
-cnx = sqlite3.connect('samsung.sqlite')
+cnx = sqlite3.connect('kospi-201704.sqlite')
 
 # ratio, amount, ends, foreigner, insti, person, program, credit
 columns = ['ratio', 'amount', 'ends', 'foreigner', 'insti', 'person', 'program', 'credit']
@@ -135,4 +135,18 @@ def step(action):
     #     done = True
 
     return [state, reward, done, None]
+
+"""get all stock codes"""
+def getAllCodes():
+    res = []
+    df = pd.read_sql_query('SELECT * from stocks', cnx)
+    codes = df.groupby('code').size()
+    for i in range(len(codes)):
+        size = codes.iloc[i]
+        code = codes.index[i]
+
+        # size가 어느정도 되는 것들만...
+        if size>500:
+            res.append(code)
+    return res
 

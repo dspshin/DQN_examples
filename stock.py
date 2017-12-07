@@ -23,6 +23,7 @@ output_size = len(env.action_space)
 
 dis = 0.9
 REPLAY_MEMORY = 50000
+max_episodes = 200
 
 def replay_train(mainDQN, targetDQN, train_batch):
     x_stack = np.empty(0).reshape(0, input_size)
@@ -126,19 +127,20 @@ def bot_play(mainDQN, isTest=False):
         state, reward, done, _ = env.step(action)
         reward_sum += reward
         if done:
-            print("{} based profit : {}".format("Test" if isTest else "Train", reward_sum))
+            print("\t{} based profit : {}".format("Test" if isTest else "Train", reward_sum))
             break
 
     end = state[2]
     # test 기간 초에 샀다가 마지막에 팔 경우의 점수 (기준점수)...
-    print('default profit :', end-start)
+    print('\tdefault profit :', end-start)
 
-def main():
-    max_episodes = 200
+def main(code):
+    print("stock code:", code)
+
     # store the previous observations in replay memory
     replay_buffer = deque()
 
-    env.load("005930")
+    env.load(code)
 
     with tf.Session() as sess:
         mainDQN = dqn.DQN(sess, input_size, output_size, name="main")
@@ -181,7 +183,7 @@ def main():
 
             #print("Episode: {} rewards: {}".format(episode, reward_sum))
 
-            if episode % 10 == 1: # train every 10 episode
+            if episode % 10 == 0: # train every 10 episode
                 # Get a random batch of experiences
                 for _ in range(50):
                     minibatch = random.sample(replay_buffer, 100)
@@ -190,12 +192,15 @@ def main():
 
                 #print("Loss: ", loss)
                 #print("Episode: {}, Loss: {}".format(episode, loss))
-                print("Episode:{}, rewards:{}, loss:{}".format(episode, reward_sum, loss))
+                #print("Episode:{}, rewards:{}, loss:{}".format(episode, reward_sum, loss))
 
                 # copy q_net -> target_net
                 sess.run(copy_ops)
 
-        print("Loss:", loss)
+            if reward_sum>1:
+                break
+
+        print("Rewards:{}, Loss:{}".format(reward_sum, loss))
 
         #for i in range(10):
         bot_play(mainDQN, False) # training result
@@ -203,8 +208,14 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    codes = gym.getAllCodes()
+    print("Total # of codes:", len(codes))
 
+    #main("005930")
+
+    for code in codes:
+        tf.reset_default_graph()
+        main(code)
 
 
 
